@@ -1,0 +1,6 @@
+build
+dist
+考试倒计时
+*.config
+*.spec
+*.zip

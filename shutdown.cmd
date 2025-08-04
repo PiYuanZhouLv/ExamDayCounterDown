@@ -1,0 +1,1 @@
+taskkill /F /im "¿¾ÊÅµ¹¼ÆÊ±.exe"

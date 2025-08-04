@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>日程管理器</title>
+    <style>
+        header {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 50px;
+            vertical-align: middle;
+            background-color: #f5f7ff;
+        }
+
+        #left {
+            position: absolute;
+            left: 0;
+            right: 50%;
+            top: 50px;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #left>div:nth-child(2)>button:hover{
+            opacity: 0.6;
+        }
+
+        #dates {
+            overflow-y: scroll;
+            flex: 1;
+        }
+
+        #right {
+            position: absolute;
+            left: 50%;
+            right: 0;
+            top: 50px;
+            bottom: 0;
+            overflow: hidden;
+            background-color: #f8fdff;
+        }
+
+        #setting{
+            position: absolute;
+            left: -50vw;
+            width: calc(50vw - 20px);
+            top: 50px;
+            bottom: 0;
+            display: grid;
+            align-items: center;
+            align-content: center;
+            text-align: center;
+            row-gap: 10px;
+            grid-template-columns: 1fr 3fr;
+            background-color: white;
+            padding: 10px;
+        }
+
+        #setting>div{
+            grid-column: 1/3;
+        }
+
+        #loadsave{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            column-gap: 1px;
+            row-gap: 1px;
+            text-align: center;
+        }
+
+        h3{
+            margin: 0;
+        }
+
+        button{
+            background-color: #4d47a1;
+            border: 1px solid hsl(244, 39%, 45%);
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        button:hover{
+            background-color: #1266e2;
+            border-color: hsl(216, 85%, 48%);
+        }
+
+        button:disabled, button:disabled:hover{
+            background-color: #efefef;
+            border-color: #efefef;
+            color: #585858;
+            cursor: not-allowed;
+        }
+
+        /* .dangerous{
+            background-color: hsl(338, 78%, 45%);
+        } */
+
+        .dangerous:hover{
+            background-color: red;/*hsl(338, 85%, 48%);*/
+            border-color: red;
+        }
+
+        #active>div, #expired>div{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            text-align: center;
+            font-size: 30px;
+        }
+
+        /* #active>div:hover, #expired>div:hover{
+            opacity: 0.6;
+        } */
+
+        #active>div>div, #expired>div>div{
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        #expired>div>span:nth-child(2){
+            font-size: 0.5em;
+        }
+
+        #windows{
+            display: flex;
+            flex-direction: column;
+            width: max-content;
+            height: max-content;
+            text-align: center;
+            padding: 10px;
+            align-items: center;
+        }
+
+        #window-parent{
+            left: 50%;
+            top: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            transform-origin: center center;
+        }
+        
+        #iconic{
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+        }
+
+        #iconic>span{
+            width: 12px;
+            height: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        #themeList>div{
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            font-size: 30px;
+        }
+
+        #themeList>div>div:nth-child(1){
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            color: var(--em);
+            background: linear-gradient(to right, var(--bg) 0%, var(--bg) 30%, var(--fg) 35%, var(--fg) 65%, var(--em) 70%, var(--em) 100%);
+            justify-items: center;
+            align-content: center;
+        }
+
+        #themeList>div>div:nth-child(2){
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        #active>div,#expired>div,#themeList>div{
+            border-top-style: solid;
+            border-top-width: 1px;
+            border-top-color: gray;
+            /* border-bottom-style: solid; */
+            /* border-bottom-width: 2px; */
+            /* border-bottom-color: gray; */
+        }
+    </style>
+</head>
+<body>
+<header>
+        <div style="top:50%;left:50%;position:absolute;transform:translate(-50%,-50%);">
+            <h1>日程管理器</h1>
+        </div>
+    </header>
+    <div id="left">
+        <div id="loadsave">
+            <span>日程文件:</span><button onclick="loadDates()">导入</button><button onclick="exportDates()">导出</button><button class="high-feature" onclick="saveDates()">保存</button>
+            <span>颜色文件:</span><button onclick="loadThemes()">导入</button><button onclick="exportThemes()">导出</button><button class="high-feature" onclick="saveThemes()">保存</button>
+        </div>
+        <div id="dates">
+            <h3>活动日程</h3>
+            <div id="active">
+                <!-- <div><span>高考</span><span>514天</span><div><button>设置</button><button class="dangerous">删除</button></div></div> -->
+            </div>
+            <button style="width: 100%; font-size: 25px; background-color: white; border-color: #0000; color: #00a9f7; cursor: pointer;" onclick="newDate()">+ 新增日程</button>
+            <h3>失效日程</h3>
+            <div id="expired">
+                <!-- <div><span>高考</span><span>2023年<br>6月7日</span><div><button>设置</button><button class="dangerous">删除</button></div></div> -->
+            </div>
+            <h3>颜色主题</h3>
+            <div id="themeList">
+                <!-- <div style="--bg: #ed2c25; --fg: #ffffff; --em: #ffff00;"><div>国旗红</div><div><button>重命名</button><button>编辑</button></div></div>
+                <div style="--bg: #ed2c25; --fg: #ffffff; --em: #ffff00;"><div><input value="#ed2c25" type="color"><input value="#ffffff" type="color"><input value="#ffff00" type="color"></div><div><button>完成</button><button class="dangerous">删除</button></div></div> -->
+            </div>
+            <button style="width: 100%; font-size: 25px; background-color: white; border-color: #0000; color: #00a9f7; cursor: pointer;" onclick="newTheme()">+ 新增颜色主题</button>
+        </div>
+    </div>
+    <div id="right">
+        <div id="window-parent" style="display: none; transform-origin: 0px 0px;"><div style="background-color: white;color: black;display: grid;font-size: 10px;grid-template-columns: 5px 50px 1fr 10px 5px;justify-items: center;align-items: center; padding: 3px;"><span></span><span>考试倒计时</span><span></span><span style="background-color: red;color: white;width: 12px;height: 12px;text-align: center;">X</span><span></span></div>
+        <div id="windows">
+            <div id="title" style="font-size: 20px;">距离<span id="name">高考</span><span id="about">还</span>有</div>
+            <div id="date" style="font-size: 30px;"><span id="rest">514</span>天</div>
+            <div id="iconic" style="font-size: 10px;"><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span><span>▧</span></div>
+            <div id="tip" style="font-size: 10px;">+500</div>
+        </div></div>
+        <div id="zoomShow" style="position: absolute; right: 0; bottom: 0; background-color: white; color: black;">100%</div>
+    </div>
+    <div id="setting">
+        <div style="font-size: 30px; font-weight: 900;">
+            日程设置
+        </div>
+        <!-- s.animate([{}, {'left':'0'}], {duration:500, fill:'forwards', easing:'ease-out'}) -->
+        <span>日程名称</span><input id="settingName">
+        <span>日程日期</span><input id="settingDate" type="date">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;">
+            <span>颜色设置<sub style="color: red;" title="对着元素选择器右键可以锁定颜色(被锁定的颜色边框为红色)">(?)</sub></span><select id="themeSelect" style="grid-column: 2/4;"><option value="custom">自定义</option></select><button onclick="addToTheme()">+</button>
+            <input id="settingBg" type="color" style="width: 100%;"><input id="settingFg" type="color" style="width: 100%;"><input id="settingEm" type="color" style="width: 100%;"><button onclick="randomColor()">🎲<sub>(效果不佳，慎用)</sub></button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr;">
+            <button id="settingPre" onclick="setPre()">精确时间</button><button id="settingRou" onclick="setRou()">大略时间</button>
+        </div>
+        <div>
+            <button style="width: 100%;" onclick="finishset()">确认</button>
+        </div>
+    </div>
+    <script>
+        function $(id){
+            return document.getElementById(id)
+        }
+
+        // [名称, 年, 月, 日, 背景颜色, 文本颜色, 强调文本颜色, 精确?]
+        dates = {}
+        new_count = 0
+        theme = {}
+        if(window.showOpenFilePicker||false){
+            date_p = undefined
+            theme_p = undefined
+            high_feature = true
+            date_file_name = ''
+            theme_file_name = ''
+        }else{
+            date_file_name = ''
+            theme_file_name = ''
+            high_feature = false
+            elems = document.getElementsByClassName('high-feature')
+            for (const elem in elems) {
+                if (Object.hasOwnProperty.call(elems, elem)) {
+                    const element = elems[elem];
+                    element.disabled = "disabled"
+                    element.title = "你的浏览器不支持该功能, 请使用“导出”或更换最新的Chrome/Edge浏览器"
+                }
+            }
+        }
+        async function readfile(){
+            fake_input = document.createElement('input')
+            fake_input.type = "file"
+            fake_input.accept = ".json"
+            ok = false
+            fake_input.addEventListener('change', ()=>{console.log('ok');ok = true})
+            fake_input.click()
+            while(!window.ok){await new Promise(resolve => setTimeout(resolve, 50));}
+            text = await fake_input.files[0].text()
+            return [fake_input.files[0].name, text]
+        }
+        async function loadDates(){
+            if(high_feature){
+                [date_p] = await showOpenFilePicker({
+                    id:"PiYuanZhouLv_DateManage",
+                    types:[
+                        {description:"日程文件", accept:{"application/text":[".json"]}}
+                    ]
+                })
+                date_text = await (await date_p.getFile()).text()
+            }else{
+                [date_file_name, date_text] = await readfile()
+            }
+            dates_array = JSON.parse(date_text)
+            today = Date.now()
+            dates = {}
+            new_count = 0
+            $("active").innerHTML = ""
+            $("expired").innerHTML = ""
+            for(i=0;i<dates_array.length;i++){
+                element = dates_array[i]
+                dates[new_count] = element
+                this_count = new_count
+                new_count++
+                name = element[0]
+                target_date = new Date(element[1], element[2]-1, element[3])
+                bg = element[4]
+                fg = element[5]
+                em = element[6]
+                pr = element[7]
+                if(target_date > today){
+                    // <div><span>高考</span><span>514天</span><div><button>设置</button><button class="dangerous">删除</button></div></div>
+                    div = document.createElement('div')
+                    div.style.backgroundColor = bg
+                    div.this_count = this_count
+                    div.addEventListener('mouseenter', (e)=>{display(e.currentTarget.this_count, false)})
+                    div.innerHTML = `<span style="color: ${fg}">${name}</span><span style="color: ${em}">${Math.ceil((target_date-today)/(1000*60*60*24))}天</span><div><button onclick="set(${this_count})">设置</button><button class="dangerous" onclick="del(${this_count})">删除</button></div>`
+                    $('active').append(div)
+                }else{
+                    // <div><span>高考</span><span>2023年<br>6月7日</span><div><button>设置</button><button class="dangerous">删除</button></div></div>
+                    div = document.createElement('div')
+                    div.this_count = this_count
+                    div.addEventListener('mouseenter', (e)=>{display(e.currentTarget.this_count, false)})
+                    div.style.backgroundColor = bg
+                    div.innerHTML = `<span style="color: ${fg}">${name}</span><span style="color: ${em}">${element[1]}年<br>${element[2]}月${element[3]}日</span><div><button onclick="set(${this_count})">设置</button><button class="dangerous" onclick="del(${this_count})">删除</button></div>`
+                    $('expired').append(div)
+                }
+            };
+        }
+        numbers4x8 = [
+            '01101001100110011001100110010110',
+            '00100110101000100010001000101111',
+            '01101001000100010010010010001111',
+            '01101001000101100001000110010110',
+            '00010011010110011111000100010001',
+            '11111000100011100001000100011110',
+            '01101000100011101001100110010110',
+            '11110001001000100100010001000100',
+            '01101001100101101001100110010110',
+            '01101001100110010111000110010110'
+        ]
+        number100 = new Set('0000000000001011111101100010000010011110001001001000100111100010010010001001001001110111100000000000'.split('').map((v, i)=>{if(v==="1"){return i}}).filter((v)=>{return v}))
+        marker = new Set('0000000000100000000110000000011000000001100000000110000000011000000001000000000010000000010000000000'.split('').map((v, i)=>{if(v==="1"){return i}}).filter((v)=>{return v}))
+        n2 = numbers4x8.map((v)=>{return new Set(v.split("").map((v, i)=>{if(v==="1"){return (i%4+1) + (Math.floor(i/4)+1)*10}}).filter((v)=>{return v}))})
+        n3 = numbers4x8.map((v)=>{return new Set(v.split("").map((v, i)=>{if(v==="1"){return (i%4+6) + (Math.floor(i/4)+1)*10}}).filter((v)=>{return v}))})
+        ncn = numbers4x8.map((v)=>{return new Set(v.split("").map((v, i)=>{if(v==="1"){return (i%4+3) + (Math.floor(i/4)+1)*10}}).filter((v)=>{return v}))})
+        nc = ncn.map((v)=>{return new Set([...v, ...marker])})
+        nq = new Set('0001111000001100110001100001100000000110000000110000000110000000110000000000000000001100000000110000'.split('').map((v, i)=>{if(v==="1"){return i}}).filter((v)=>{return v}))
+
+        function render_number(num){
+            if(num==0){
+                return number100
+            }else if(num<10){
+                return nc[num]
+            }else{
+                return new Set([...n2[Math.floor(num/10)], ...n3[num%10]])
+            }
+        }
+
+        displayLock = false
+        function display(id, forced){
+            if(!displayLock||forced){
+                $("window-parent").style.display = ""
+                $("windows").style.backgroundColor = dates[id][4]
+                $("name").innerText = dates[id][0]
+                $("title").style.color = dates[id][5]
+                $("date").style.color = dates[id][6]
+                $("tip").style.color = dates[id][5]
+                $("about").innerText = dates[id][7]?"还":"约"
+                $("iconic").style.setProperty('--fg', dates[id][5])
+                $("iconic").style.setProperty('--em', dates[id][6])
+                day_left = Math.ceil((new Date(dates[id][1], dates[id][2]-1, dates[id][3])-new Date())/(1000*60*60*24))
+                if(day_left<=0){
+                    $("rest").innerText = '??'
+                    $("tip").innerText = "已失效"
+                    numblock = []
+                    for(i=0;i<100;i++){
+                        if(nq.has(i)){
+                            numblock.push(`<span style="color: var(--em)">★</span>`)
+                        }else{
+                            numblock.push(`<span style="color: var(--fg)">▧</span>`)
+                        }
+                    }
+                }else{
+                    $("rest").innerText = day_left
+                    numblock = []
+                    numcondition = render_number(day_left%100)
+                    for(i=0;i<100;i++){
+                        if(i+1<=day_left%100){
+                            if(numcondition.has(i)){
+                                numblock.push(`<span style="color: var(--em)">★</span>`)
+                            }else{
+                                numblock.push(`<span style="color: var(--fg)">▧</span>`)
+                            }
+                        }else{
+                            if(numcondition.has(i)){
+                                numblock.push(`<span style="color: var(--em)">☆</span>`)
+                            }else{
+                                numblock.push(`<span> </span>`)
+                            }
+                        }
+                    }
+                    if(day_left<=100){
+                        $("tip").innerText = `仅剩${day_left}天`
+                    }else{
+                        $("tip").innerText = '+' + 100*Math.floor((day_left-1)/100)
+                    }
+                }
+                $("iconic").innerHTML = numblock.join('')
+            }
+        }
+        function display_color_only(bg, fg, em){
+            if(!displayLock){
+                $("windows").style.backgroundColor = bg
+                $("title").style.color = fg
+                $("date").style.color = em
+                $("tip").style.color = fg
+                $("iconic").style.setProperty('--fg', fg)
+                $("iconic").style.setProperty('--em', em)
+            }
+        }
+        async function loadThemes(){
+            if(high_feature){
+                [theme_p] = await showOpenFilePicker({
+                    id:"PiYuanZhouLv_DateManage",
+                    types:[
+                        {description:"颜色主题文件", accept:{"application/text":[".json"]}}
+                    ]
+                })
+                theme_text = await (await theme_p.getFile()).text()
+            }else{
+                let [theme_file_name, theme_text] = await readfile()
+            }
+            theme = JSON.parse(theme_text)
+            $("themeList").innerHTML = ""
+            $("themeSelect").innerHTML = '<option value="custom">自定义</option>'
+            for (const key in theme) {
+                if (Object.hasOwnProperty.call(theme, key)) {
+                    const colors = theme[key];
+                    opt = document.createElement('option')
+                    opt.value = key
+                    opt.innerText = key
+                    $("themeSelect").append(opt)
+                    // <div style="--bg: #ed2c25; --fg: #ffffff; --em: #ffff00;"><div>国旗红</div><div><button>重命名</button><button>编辑</button></div></div>
+                    div = document.createElement('div')
+                    div.addEventListener('mouseenter', (evt)=>{
+                        display_color_only(evt.currentTarget.childNodes[0].style.getPropertyValue('--bg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--fg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--em'))
+                    })
+                    div.innerHTML = `<div style="--bg: ${colors[0]}; --fg: ${colors[1]}; --em: ${colors[2]};">${key}</div><div><button onclick="themeRename('${key}')">重命名</button><button onclick="themeEdit('${key}')">编辑</button></div>`
+                    $('themeList').append(div)
+                }
+            }
+        }
+        zoom = 1
+        zoomD = 1e-4
+        $("right").addEventListener('wheel', (evt)=>{
+            zoom *= Math.exp(evt.deltaY*zoomD)
+            zoom = Math.min(Math.max(0.1, zoom), 5)
+            $('zoomShow').innerText = (zoom*100).toFixed(2)+'%'
+            $("window-parent").style.transform = `scale(${zoom}) translate(-50%, -50%)`
+            evt.preventDefault()
+        })
+        colorConstant = {"aliceblue":"#F0F8FF", "antiquewhite":"#FAEBD7", "aqua":"#00FFFF", "aquamarine":"#7FFFD4", "azure":"#F0FFFF", "beige":"#F5F5DC", "bisque":"#FFE4C4", "black":"#000000", "blanchedalmond":"#FFEBCD", "blue":"#0000FF", "blueviolet":"#8A2BE2", "brown":"#A52A2A", "burlywood":"#DEB887", "cadetblue":"#5F9EA0", "chartreuse":"#7FFF00", "chocolate":"#D2691E", "coral":"#FF7F50", "cornflowerblue":"#6495ED", "cornsilk":"#FFF8DC", "crimson":"#DC143C", "cyan":"#00FFFF", "darkblue":"#00008B", "darkcyan":"#008B8B", "darkgoldenrod":"#B8860B", "darkgray":"#A9A9A9", "darkgreen":"#006400", "darkkhaki":"#BDB76B", "darkmagenta":"#8B008B", "darkolivegreen":"#556B2F", "darkorange":"#FF8C00", "darkorchid":"#9932CC", "darkred":"#8B0000", "darksalmon":"#E9967A", "darkseagreen":"#8FBC8F", "darkslateblue":"#483D8B", "darkslategray":"#2F4F4F", "darkturquoise":"#00CED1", "darkviolet":"#9400D3", "deeppink":"#FF1493", "deepskyblue":"#00BFFF", "dimgray":"#696969", "dodgerblue":"#1E90FF", "firebrick":"#B22222", "floralwhite":"#FFFAF0", "forestgreen":"#228B22", "fuchsia":"#FF00FF", "gainsboro":"#DCDCDC", "ghostwhite":"#F8F8FF", "gold":"#FFD700", "goldenrod":"#DAA520", "gray":"#808080", "green":"#008000", "greenyellow":"#ADFF2F",    
+                         "honeydew":"#F0FFF0", "hotpink":"#FF69B4", "indianred":"#CD5C5C", "indigo":"#4B0082", "ivory":"#FFFFF0", "khaki":"#F0E68C", "lavender":"#E6E6FA", "lavenderblush":"#FFF0F5", "lawngreen":"#7CFC00", "lemonchiffon":"#FFFACD", "lightblue":"#ADD8E6", "lightcoral":"#F08080", "lightcyan":"#E0FFFF", "lightgoldenrodyellow":"#FAFAD2", "lightgrey":"#D3D3D3", "lightgreen":"#90EE90", "lightpink":"#FFB6C1", "lightsalmon":"#FFA07A", "lightseagreen":"#20B2AA", "lightskyblue":"#87CEFA", "lightslategray":"#778899", "lightsteelblue":"#B0C4DE", "lightyellow":"#FFFFE0", "lime":"#00FF00", "limegreen":"#32CD32", "linen":"#FAF0E6", "magenta":"#FF00FF", "maroon":"#800000", "mediumaquamarine":"#66CDAA", "mediumblue":"#0000CD", "mediumorchid":"#BA55D3", "mediumpurple":"#9370D8", "mediumseagreen":"#3CB371", "mediumslateblue":"#7B68EE", "mediumspringgreen":"#00FA9A", "mediumturquoise":"#48D1CC", "mediumvioletred":"#C71585", "midnightblue":"#191970", "mintcream":"#F5FFFA", "mistyrose":"#FFE4E1", "moccasin":"#FFE4B5", "navajowhite":"#FFDEAD", "navy":"#000080", "oldlace":"#FDF5E6", "olive":"#808000", "olivedrab":"#6B8E23", "orange":"#FFA500", "orangered":"#FF4500", "orchid":"#DA70D6", "palegoldenrod":"#EEE8AA",    
+                         "palegreen":"#98FB98", "paleturquoise":"#AFEEEE", "palevioletred":"#D87093", "papayawhip":"#FFEFD5", "peachpuff":"#FFDAB9", "peru":"#CD853F", "pink":"#FFC0CB", "plum":"#DDA0DD", "powderblue":"#B0E0E6", "purple":"#800080", "rebeccapurple":"#663399", "red":"#FF0000", "rosybrown":"#BC8F8F", "royalblue":"#4169E1", "saddlebrown":"#8B4513", "salmon":"#FA8072", "sandybrown":"#F4A460", "seagreen":"#2E8B57", "seashell":"#FFF5EE", "sienna":"#A0522D", "silver":"#C0C0C0", "skyblue":"#87CEEB", "slateblue":"#6A5ACD", "slategray":"#708090", "snow":"#FFFAFA", "springgreen":"#00FF7F", "steelblue":"#4682B4", "tan":"#D2B48C", "teal":"#008080", "thistle":"#D8BFD8", "tomato":"#FF6347", "turquoise":"#40E0D0", "violet":"#EE82EE", "wheat":"#F5DEB3", "white":"#FFFFFF", "whitesmoke":"#F5F5F5", "yellow":"#FFFF00", "yellowgreen":"#9ACD32"}
+        function coventColor(color){
+            return color in colorConstant?colorConstant[color]:color
+        }
+        setting = -1
+        settingBlock = undefined
+        bgcsl = false
+        fgcsl = false
+        emcsl = false
+        function set(id){
+            bgcsl = false
+            fgcsl = false
+            emcsl = false
+            $("settingBg").style.backgroundColor = ""
+            $("settingFg").style.backgroundColor = ""
+            $("settingEm").style.backgroundColor = ""
+            $("settingBg").removeAttribute("disabled")
+            $("settingFg").removeAttribute("disabled")
+            $("settingEm").removeAttribute("disabled")
+            displayLock = true
+            setting = id
+            settingBlock = document.querySelector(`button[onclick="set(${id})"]`).parentElement.parentElement
+            display(id, true)
+            $("settingName").value = dates[id][0]
+            $("settingDate").value = `${dates[id][1]}-${dates[id][2].toString().padStart(2, "0")}-${dates[id][3].toString().padStart(2, "0")}`
+            $("themeSelect").value = "custom"
+            $("settingBg").value = coventColor(dates[id][4])
+            $("settingFg").value = coventColor(dates[id][5])
+            $("settingEm").value = coventColor(dates[id][6])
+            if(dates[id][7]){
+                $("settingPre").style.backgroundColor = ""
+                $("settingRou").style.backgroundColor = "grey"
+            }else{
+                $("settingPre").style.backgroundColor = "grey"
+                $("settingRou").style.backgroundColor = ""
+            }
+            $("setting").animate([{}, {'left':'0'}], {duration:500, fill:'forwards', easing:'ease-out'})
+        }
+        $("settingName").addEventListener('input', ()=>{
+            dates[setting][0] = $("settingName").value
+            display(setting, true)
+        })
+        $("settingName").addEventListener('input', ()=>{
+            dates[setting][0] = $("settingName").value
+            display(setting, true)
+        })
+        $("settingDate").addEventListener('input', ()=>{
+            if(!$("settingDate").checkValidity()){
+                return
+            }
+            date = new Date($("settingDate").value)
+            dates[setting][1] = date.getFullYear()
+            dates[setting][2] = date.getMonth()+1
+            dates[setting][3] = date.getDate()
+            display(setting, true)
+        })
+        $("settingBg").addEventListener('input', ()=>{
+            dates[setting][4] = $("settingBg").value
+            $("themeSelect").value = "custom"
+            display(setting, true)
+        })
+        $("settingFg").addEventListener('input', ()=>{
+            dates[setting][5] = $("settingFg").value
+            $("themeSelect").value = "custom"
+            display(setting, true)
+        })
+        $("settingEm").addEventListener('input', ()=>{
+            dates[setting][6] = $("settingEm").value
+            $("themeSelect").value = "custom"
+            display(setting, true)
+        })
+        $("themeSelect").addEventListener('input', ()=>{
+            dates[setting][4] = theme[$("themeSelect").value][0]
+            dates[setting][5] = theme[$("themeSelect").value][1]
+            dates[setting][6] = theme[$("themeSelect").value][2]
+            $("settingBg").value = coventColor(theme[$("themeSelect").value][0])
+            $("settingFg").value = coventColor(theme[$("themeSelect").value][1])
+            $("settingEm").value = coventColor(theme[$("themeSelect").value][2])
+            display(setting, true)
+        })
+        $("settingBg").addEventListener('contextmenu', (evt)=>{
+            evt.preventDefault()
+            if(bgcsl){
+                $("settingBg").style.backgroundColor = ""
+                $("settingBg").removeAttribute("disabled")
+            }else{
+                $("settingBg").style.backgroundColor = "red"
+                $("settingBg").disabled = "disabled"
+            }
+            bgcsl = !bgcsl
+        })
+        $("settingFg").addEventListener('contextmenu', (evt)=>{
+            evt.preventDefault()
+            if(fgcsl){
+                $("settingFg").style.backgroundColor = ""
+                $("settingFg").removeAttribute("disabled")
+            }else{
+                $("settingFg").style.backgroundColor = "red"
+                $("settingFg").disabled = "disabled"
+            }
+            fgcsl = !fgcsl
+        })
+        $("settingEm").addEventListener('contextmenu', (evt)=>{
+            evt.preventDefault()
+            if(emcsl){
+                $("settingEm").style.backgroundColor = ""
+                $("settingEm").removeAttribute("disabled")
+            }else{
+                $("settingEm").style.backgroundColor = "red"
+                $("settingEm").disabled = "disabled"
+            }
+            emcsl = !emcsl
+        })
+        function setPre(){
+            dates[setting][7] = true
+            $("settingPre").style.backgroundColor = ""
+            $("settingRou").style.backgroundColor = "grey"
+            display(setting, true)
+        }
+        function setRou(){
+            dates[setting][7] = false
+            $("settingPre").style.backgroundColor = "grey"
+            $("settingRou").style.backgroundColor = ""
+            display(setting, true)
+        }
+        function finishset(){
+            displayLock = false
+            try{
+                settingBlock.parentNode.removeChild(settingBlock)
+            }catch{
+                console.log('catch!')
+            }
+            (new Date(dates[setting][1], dates[setting][2]-1, dates[setting][3])>Date.now()?$("active"):$("expired")).append(settingBlock)
+            settingBlock.style.backgroundColor = dates[setting][4]
+            settingBlock.childNodes[0].innerText = dates[setting][0]
+            settingBlock.childNodes[0].style.color = dates[setting][5]
+            settingBlock.childNodes[1].innerHTML = new Date(dates[setting][1], dates[setting][2]-1, dates[setting][3])>Date.now()?Math.ceil((new Date(dates[setting][1], dates[setting][2]-1, dates[setting][3])-new Date())/(1000*60*60*24))+"天":`${dates[setting][1]}年<br>${dates[setting][2]}月${dates[setting][3]}日`
+            settingBlock.childNodes[1].style.color = dates[setting][6]
+            setting = -1
+            $("setting").animate([{}, {'left':'-50vw'}], {duration:500, fill:'forwards', easing:'ease-out'})
+        }
+        function newDate(){
+            this_count = new_count
+            new_count++
+            name = "高考"
+            bg = "#ed2c25"
+            fg = "#ffffff"
+            em = "#ffff00"
+            target_date = new Date(new Date().getFullYear()+(new Date(new Date().getFullYear(), 6-1, 7)>new Date()?0:1), 6-1, 7)
+            dates[this_count] = [name, target_date.getFullYear(), 6, 7, bg, fg, em, true]
+            div = document.createElement('div')
+            div.style.backgroundColor = bg
+            div.this_count = this_count
+            div.addEventListener('mouseenter', (e)=>{display(e.currentTarget.this_count, false)})
+            div.innerHTML = `<span style="color: ${fg}">${name}</span><span style="color: ${em}">${Math.ceil((target_date-Date.now())/(1000*60*60*24))}天</span><div><button onclick="set(${this_count})">设置</button><button class="dangerous" onclick="del(${this_count})">删除</button></div>`
+            $('active').append(div)
+            set(this_count)
+        }
+        function del(id){
+            if(!confirm("确认删除吗？此操作不可逆！")){
+                return
+            }
+            div = document.querySelector(`button[onclick="del(${id})"]`).parentNode.parentNode
+            div.parentElement.removeChild(div)
+            delete dates[id]
+        }
+        function exportfile(name, text){
+            a = document.createElement('a')
+            tmp_f = new File([text], "tempFile")
+            tmp_link = URL.createObjectURL(tmp_f)
+            a.href = tmp_link
+            a.download = name
+            a.click()
+            URL.revokeObjectURL(tmp_link)
+        }
+        function exportDates(){
+            text = JSON.stringify(Object.values(dates))
+            fn = ""
+            if(high_feature&&date_p){
+                fn = date_p.name
+            }else{
+                fn = date_file_name
+            }
+            fn = fn||"defaultDateFile.json"
+            exportfile(fn, text)
+        }
+        async function saveDates(){
+            if(!date_p){
+                date_p = await showSaveFilePicker({
+                    id:"PiYuanZhouLv_DateManage",
+                    types:[
+                        {description:"日程文件", accept:{"application/text":[".json"]}}
+                    ]
+                })
+            }
+            text = JSON.stringify(Object.values(dates))
+            writable = await date_p.createWritable()
+            await writable.write(text)
+            await writable.close()
+        }
+        function randomColor(){
+            if(!bgcsl){$("settingBg").value = `#${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}`}
+            if(!fgcsl){$("settingFg").value = `#${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}`}
+            if(!emcsl){$("settingEm").value = `#${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}${Math.floor(Math.random()*256).toString(16)}`}
+            dates[setting][4] = $("settingBg").value
+            dates[setting][5] = $("settingFg").value
+            dates[setting][6] = $("settingEm").value
+            display(setting, true)
+        }
+        function addToTheme(){
+            name = prompt("请输入名称")
+            if(name===null||name==='null'){return}
+            theme[name] = [$("settingBg").value, $("settingFg").value, $("settingEm").value]
+            opt = document.createElement('option')
+            opt.value = name
+            opt.innerText = name
+            $("themeSelect").append(opt)
+            $("themeSelect").value = name
+            div = document.createElement('div')
+            div.addEventListener('mouseenter', (evt)=>{
+                display_color_only(evt.currentTarget.childNodes[0].style.getPropertyValue('--bg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--fg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--em'))
+            })
+            div.innerHTML = `<div style="--bg: ${theme[name][0]}; --fg: ${theme[name][1]}; --em: ${theme[name][2]};">${name}</div><div><button onclick="themeRename('${name}')">重命名</button><button onclick="themeEdit('${name}')">编辑</button></div>`
+            $('themeList').append(div)
+        }
+        function themeRename(name){
+            newName = prompt("请输入名称")
+            if(newName === null||newName==='null'){return}
+            theme[newName] = theme[name]
+            delete theme[name]
+            div = document.querySelector(`button[onclick="themeRename('${name}')"]`).parentNode.parentNode
+            div.childNodes[0].innerText = newName
+            div.childNodes[1].childNodes[0].setAttribute('onclick', `themeRename('${newName}')`)
+            div.childNodes[1].childNodes[1].setAttribute('onclick', `themeEdit('${newName}')`)
+            opt = document.querySelector(`option[value="${name}"]`)
+            opt.setAttribute('value', newName)
+            opt.innerText = newName
+        }
+        function themeEdit(name){
+            let inputBg = document.createElement('input')
+            inputBg.type = "color"
+            inputBg.value = theme[name][0]
+            let inputFg = document.createElement('input')
+            inputFg.type = "color"
+            inputFg.value = theme[name][1]
+            let inputEm = document.createElement('input')
+            inputEm.type = "color"
+            inputEm.value = theme[name][2]
+            function on_change(){
+                blockDiv.childNodes[0].style.setProperty('--bg', inputBg.value)
+                blockDiv.childNodes[0].style.setProperty('--fg', inputFg.value)
+                blockDiv.childNodes[0].style.setProperty('--em', inputEm.value)
+                theme[name][0] = inputBg.value
+                theme[name][1] = inputFg.value
+                theme[name][2] = inputEm.value
+            }
+            inputBg.addEventListener('input', on_change)
+            inputFg.addEventListener('input', on_change)
+            inputEm.addEventListener('input', on_change)
+            let blockDiv = document.querySelector(`button[onclick="themeRename('${name}')"]`).parentNode.parentNode
+            blockDiv.childNodes[0].innerHTML = ""
+            blockDiv.childNodes[0].append(inputBg)
+            blockDiv.childNodes[0].append(inputFg)
+            blockDiv.childNodes[0].append(inputEm)
+            blockDiv.childNodes[1].childNodes[0].innerText = "完成"
+            blockDiv.childNodes[1].childNodes[0].setAttribute('onclick', `finishThemeEdit('${name}')`)
+            blockDiv.childNodes[1].childNodes[1].innerText = "删除"
+            blockDiv.childNodes[1].childNodes[1].classList.add('dangerous')
+            blockDiv.childNodes[1].childNodes[1].setAttribute('onclick', `removeTheme('${name}')`)
+        }
+        function removeTheme(name){
+            if(confirm("确认删除吗？此操作不可逆！")){
+                delete theme[name]
+                div = document.querySelector(`button[onclick="removeTheme('${name}')"]`).parentNode.parentNode
+                div.parentNode.removeChild(div)
+                opt = document.querySelector(`option[value="${name}"]`)
+            }
+        }
+        function finishThemeEdit(name){
+            div = document.querySelector(`button[onclick="finishThemeEdit('${name}')"]`).parentNode.parentNode
+            div.childNodes[0].innerHTML = ""
+            div.childNodes[0].innerText = name
+            div.childNodes[1].childNodes[0].innerText = "重命名"
+            div.childNodes[1].childNodes[0].setAttribute('onclick', `themeRename('${name}')`)
+            div.childNodes[1].childNodes[1].innerText = "编辑"
+            div.childNodes[1].childNodes[1].classList.remove("dangerous")
+            div.childNodes[1].childNodes[1].setAttribute('onclick', `themeEdit('${name}')`)
+        }
+        function newTheme(){
+            name = prompt("请输入名称")
+            if(name === null||name==='null'){return}
+            theme[name] = ["#ffffff", "#ffffff", "#ffffff"]
+            opt = document.createElement('option')
+            opt.value = name
+            opt.innerText = name
+            $("themeSelect").append(opt)
+            div = document.createElement('div')
+            div.addEventListener('mouseenter', (evt)=>{
+                display_color_only(evt.currentTarget.childNodes[0].style.getPropertyValue('--bg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--fg'), evt.currentTarget.childNodes[0].style.getPropertyValue('--em'))
+            })
+            div.innerHTML = `<div style="--bg: ${theme[name][0]}; --fg: ${theme[name][1]}; --em: ${theme[name][2]};">${name}</div><div><button onclick="themeRename('${name}')">重命名</button><button onclick="themeEdit('${name}')">编辑</button></div>`
+            $('themeList').append(div)
+            themeEdit(name)
+        }
+        function exportThemes(){
+            text = JSON.stringify(theme)
+            fn = ""
+            if(high_feature&&theme_p){
+                fn = theme_p.name
+            }else{
+                fn = theme_file_name
+            }
+            fn = fn||"defaultThemeFile.json"
+            exportfile(fn, text)
+        }
+        async function saveThemes(){
+            if(!theme_p){
+                theme_p = await showSaveFilePicker({
+                    id:"PiYuanZhouLv_DateManage",
+                    types:[
+                        {description:"颜色主题文件", accept:{"application/text":[".json"]}}
+                    ]
+                })
+            }
+            text = JSON.stringify(theme)
+            writable = await theme_p.createWritable()
+            await writable.write(text)
+            await writable.close()
+        }
+    </script>
+</body>
+
+</html>
